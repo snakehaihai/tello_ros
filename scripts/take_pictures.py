@@ -31,8 +31,8 @@ class TakePictureNode:
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
         
-        # Set the image encoding to rgb8
-        self.encoding = 'rgb8'
+        # Set the image encoding to bgr8
+        self.encoding = 'bgr8'
         
         rospy.loginfo(f"Pictures will be saved to: {self.save_dir}")
         rospy.loginfo(f"Using image encoding: {self.encoding}")

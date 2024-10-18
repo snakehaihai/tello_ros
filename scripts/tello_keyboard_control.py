@@ -89,7 +89,7 @@ class TelloKeyboardNode:
         pygame.quit()
 
     def image_callback(self, msg):
-        self.latest_image = self.bridge.imgmsg_to_cv2(msg, "rgb8")
+        self.latest_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
 
     def battery_callback(self, msg):
         self.latest_battery = msg.data
