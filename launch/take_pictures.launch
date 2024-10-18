@@ -1,0 +1,4 @@
+<launch>
+  <node name="tello_node" pkg="tello_ros" type="tello_node.py" output="screen"/>
+  <node name="tello_take_picture_node" pkg="tello_ros" type="take_pictures.py" output="screen"/>
+</launch>
