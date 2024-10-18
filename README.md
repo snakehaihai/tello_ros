@@ -9,9 +9,16 @@ cd src
 git clone https://github.com/vvEverett/tello_ros.git
 ```
 ## Download DJITelloPy
+Recommand
 ```
 cd ~/Tello_ros/src/tello_ros/src
-git clone https://github.com/damiafuentes/DJITelloPy.git
+git clone https://github.com/vvEverett/DJITelloPy.git
+cd DJITelloPy
+pip install -e .
+```
+or
+```
+pip3 install djitellopy
 ```
 ## Install
 ```
