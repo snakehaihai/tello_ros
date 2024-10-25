@@ -1,9 +1,10 @@
 <launch>
   <node name="tello_node" pkg="tello_ros" type="tello_node.py" output="screen"/>
   <node name="tello_keyboard_node" pkg="tello_ros" type="tello_keyboard_control.py" output="screen"/>
-
+  
   <!-- Optionally, launch a node to record the flight data -->
+  <!--
   <node pkg="rosbag" type="record" name="rosbag_record_tello"
        args="record -o $(find tello_ros)/flight_data /tello/cmd_vel /tello/camera/image_raw /tello/battery" />
-
+  -->
 </launch>

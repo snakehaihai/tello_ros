@@ -23,17 +23,23 @@ class TelloNode:
         
         self.bridge = CvBridge()
         
+        try:
+            self.id = rospy.get_param('~ID', '')
+        except KeyError:
+            self.id = ''
+        self.publish_prefix = f"tello{self.id}/"
+        
         # Publishers
-        self.image_pub = rospy.Publisher('tello/camera/image_raw', Image, queue_size=10)
-        self.gray_image_pub = rospy.Publisher('tello/camera/image_gray', Image, queue_size=10)
-        self.battery_pub = rospy.Publisher('tello/battery', Int32, queue_size=10)
-        self.status_pub = rospy.Publisher('tello/status', String, queue_size=10)
+        self.image_pub = rospy.Publisher(self.publish_prefix +'camera/image_raw', Image, queue_size=10)
+        self.gray_image_pub = rospy.Publisher(self.publish_prefix +'camera/image_gray', Image, queue_size=10)
+        self.battery_pub = rospy.Publisher(self.publish_prefix +'battery', Int32, queue_size=10)
+        self.status_pub = rospy.Publisher(self.publish_prefix +'status', String, queue_size=10)
         
         # Subscribers
-        rospy.Subscriber('tello/cmd_vel', Twist, self.cmd_vel_callback)
-        rospy.Subscriber('tello/takeoff', Empty, self.takeoff_callback)
-        rospy.Subscriber('tello/land', Empty, self.land_callback)
-        rospy.Subscriber('tello/flip', String, self.flip_callback)
+        rospy.Subscriber(self.publish_prefix +'cmd_vel', Twist, self.cmd_vel_callback)
+        rospy.Subscriber(self.publish_prefix +'takeoff', Empty, self.takeoff_callback)
+        rospy.Subscriber(self.publish_prefix +'land', Empty, self.land_callback)
+        rospy.Subscriber(self.publish_prefix +'flip', String, self.flip_callback)
         
         # Timer for publishing camera frames and battery status
         rospy.Timer(rospy.Duration(0.1), self.timer_callback)
