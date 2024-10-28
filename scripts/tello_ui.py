@@ -36,7 +36,8 @@ class TelloUI(object):
         self.quit_flag = False
 
         try: 
-            self.id                = rospy.get_param('~ID')
+            self.id = rospy.get_param('~ID')
+            print(self.id)
         except KeyError:
             self.id = ''
         self.publish_prefix = "tello{}/".format(self.id)
@@ -46,9 +47,9 @@ class TelloUI(object):
         try:
             self.pose_topic_name = rospy.get_param('~POSE_TOPIC_NAME')
         except KeyError:
-            self.pose_topic_name = '/ccmslam/PoseOutClient'+str(self.id)
+            self.pose_topic_name = '/AirSLAM/frame_pose'+str(self.id) # should be changed to AirSLAM pose topic
 
-
+        print(self.publish_prefix)
         self.point_command_pos = Point(0.0, 0.0, 1.0)
         self.point_command_pos_yaw = 0.0
         self.command_pos = Pose()
@@ -110,78 +111,61 @@ class TelloUI(object):
         self.default_bg = '#d9d9d9'
 
 
-
+        # Create main left frame container with sunken visual effect
         self.left_frame = tki.Frame(self.root, relief=tki.SUNKEN)
-        self.left_frame.grid(row=0, column=0)
-
-        self.init_command_pos_frame(self.left_frame)
-
-        self.init_real_world_frame(self.left_frame)
-
-        self.init_rotated_frame(self.left_frame)
-
-        self.init_slam_pose_frame(self.left_frame)
-
-        self.init_delta_frame(self.left_frame)
-
-        self.init_speed_frame(self.left_frame)
-
-        self.init_info_frame(self.left_frame)
-
-        self.init_manual_control_frame(self.left_frame)
+        self.left_frame.grid(row=0, column=0) # Position frame in top-left corner
+        # Initialize all control sections
+        self.init_command_pos_frame(self.left_frame)    # Commands & position
+        self.init_real_world_frame(self.left_frame)     # Real world coords
+        self.init_rotated_frame(self.left_frame)        # Rotation status
+        self.init_slam_pose_frame(self.left_frame)      # SLAM positioning
+        self.init_delta_frame(self.left_frame)          # Delta values
+        self.init_speed_frame(self.left_frame)          # Speed controls
+        self.init_info_frame(self.left_frame)           # Info display
+        self.init_manual_control_frame(self.left_frame) # Manual controls
 
         # self.init_angle_calc_frame()
-
         # self.init_kd_kp_frame()
-
+        
+        # Create right frame container with sunken effect 
         self.number_of_trajectory_points_ui = 10
-
         self.right_frame = tki.Frame(self.root, relief=tki.SUNKEN)
-        self.right_frame.grid(row=0, column=1)
+        self.right_frame.grid(row=0, column=1) # Position frame at right side
         self.row = 0
         self.column = 0
-
+        # Initialize functional sections in right frame
         self.init_merge_map_frame(self.right_frame)
         self.init_trajectory_frame(self.right_frame)
-
-
-
-
-
         self.update_command_pos_to_gui()
-
-
-
-
-
         self.row += 1
         self.column = 0
 
 
-        # set a callback to handle when the window is closed
+        # Set the window title with Tello ID
         self.root.wm_title("TELLO Controller"+str(self.id))
+        # Register window close handler - executes self.onClose when user clicks 'X'
         self.root.wm_protocol("WM_DELETE_WINDOW", self.onClose)
 
         self.kd = Pose()
         self.kp = Pose()
 
         # rospy.Subscriber('/orb_slam2_mono/pose', PoseStamped, self.slam_callback)
-        rospy.Subscriber(self.pose_topic_name, PoseStamped, self.slam_callback)
+        rospy.Subscriber(self.pose_topic_name, PoseStamped, self.slam_callback) # should be changed to AirSLAM pose topic
         rospy.Subscriber(self.publish_prefix+'delta_pos', Point, self.delta_pos_callback)
-        rospy.Subscriber(self.publish_prefix+'cmd_vel', Twist, self.speed_callback)
+        rospy.Subscriber(self.publish_prefix+'cmd_vel', Twist, self.speed_callback) # sub and pub
         # rospy.Subscriber(self.publish_prefix+'flight_data', FlightData, self.flightdata_callback)
-        rospy.Subscriber(self.publish_prefix+'allow_slam_control', Bool, self.allow_slam_control_callback)
+        rospy.Subscriber(self.publish_prefix+'allow_slam_control', Bool, self.allow_slam_control_callback) # sub and pub
         rospy.Subscriber(self.publish_prefix+'real_world_scale', Float32, self.real_world_scale_callback)
         rospy.Subscriber(self.publish_prefix+'real_world_pos', PoseStamped, self.real_world_pos_callback) 
         rospy.Subscriber(self.publish_prefix+'rotated_pos', Point, self.rotated_pos_callback)
-        rospy.Subscriber(self.publish_prefix+'command_pos', Pose, self.command_pos_callback)
+        rospy.Subscriber(self.publish_prefix+'command_pos', Pose, self.command_pos_callback) # sub and pub
         rospy.Subscriber(self.publish_prefix+'orientation', Point, self.orientation_callback)
 
-        self.command_pos_publisher = rospy.Publisher(self.publish_prefix+'command_pos', Pose, queue_size = 1)
+        self.command_pos_publisher = rospy.Publisher(self.publish_prefix+'command_pos', Pose, queue_size = 1) # sub and pub
         self.pub_takeoff = rospy.Publisher(self.publish_prefix+'takeoff', Empty, queue_size=1)
         self.pub_land = rospy.Publisher(self.publish_prefix+'land', Empty, queue_size=1)
-        self.pub_allow_slam_control = rospy.Publisher(self.publish_prefix+'allow_slam_control', Bool, queue_size=1)
-        self.cmd_val_publisher = rospy.Publisher(self.publish_prefix+'cmd_vel', Twist, queue_size = 1)
+        self.pub_allow_slam_control = rospy.Publisher(self.publish_prefix+'allow_slam_control', Bool, queue_size=1) # sub and pub
+        self.cmd_val_publisher = rospy.Publisher(self.publish_prefix+'cmd_vel', Twist, queue_size = 1) # sub and pub
         self.calibrate_real_world_scale_publisher = rospy.Publisher(self.publish_prefix+'calibrate_real_world_scale', Empty, queue_size = 1)
         self.scan_room_publisher = rospy.Publisher(self.publish_prefix+'scan_room', Bool, queue_size = 1)
         self.kd_publisher = rospy.Publisher(self.publish_prefix+'kd', Pose, queue_size = 1)
@@ -202,7 +186,8 @@ class TelloUI(object):
         rospy.loginfo("nothing")
         return
 
-
+    # GUI Frame Functions
+    
     def init_command_pos_frame(self, root_frame):
         self.init_command_pos_frame_flag = True
         self.frame_command = tki.Frame(root_frame, relief=tki.SUNKEN, borderwidth = 1)
@@ -239,7 +224,7 @@ class TelloUI(object):
         self.command_entry_x = tki.Entry(self.current_frame, width=9, textvariable=self.command_strigvar_x)
         self.command_entry_x.grid(row=self.frame_row, column=self.frame_column)#, padx=5, pady=5)
         self.command_entry_x.delete(0, tki.END)
-        self.command_entry_x.insert(0, "0.0")
+        self.command_entry_x.insert(0, "0.0") # default value 0.0
 
         self.frame_column += 1
 
@@ -266,7 +251,8 @@ class TelloUI(object):
         self.command_entry_yaw.insert(0, "0.0")
 
         self.frame_column += 1
-
+        
+        # Buttons
         self.frame_row += 1
         self.frame_column = 0
 
@@ -1011,9 +997,6 @@ class TelloUI(object):
         self.row += 1
         self.column = 0
 
-
-
-    
     def init_trajectory_frame(self, root_frame):
         
         self.init_trajectory_frame_flag = True
@@ -1145,7 +1128,7 @@ class TelloUI(object):
         self.row += 1
         self.column = 0
 
-    
+    # Callbacks
 
     def calibrate_z_callback(self):
         self.calibrate_real_world_scale_publisher.publish()
