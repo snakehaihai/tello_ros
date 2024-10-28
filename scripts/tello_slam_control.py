@@ -139,7 +139,7 @@ class TelloSlamControler(object):
         rospy.Subscriber(self.pose_topic_name,  PoseStamped, self.slam_callback)
         rospy.Subscriber(self.publish_prefix+'command_pos', Pose, self.command_pos_callback)
         rospy.Subscriber(self.publish_prefix+'allow_slam_control', Bool, self.allow_slam_control_callback)
-        # rospy.Subscriber(self.publish_prefix+'flight_data', FlightData, self.flightdata_callback)
+        rospy.Subscriber(self.publish_prefix+'altitude', Float32, self.flightdata_callback)
         rospy.Subscriber(self.publish_prefix+'takeoff', Empty, self.takeoff_callback)
         rospy.Subscriber(self.publish_prefix+'calibrate_real_world_scale', Empty, self.calibrate_real_word_scale_callback)
         rospy.Subscriber(self.publish_prefix+'scan_room', Bool, self.scan_room_callback)
@@ -217,8 +217,8 @@ class TelloSlamControler(object):
             self.last_time_published = time.time()
             threading.Timer(new_timer, self.peridoc_timer).start()
 
-    def flightdata_callback(self, flight_data):
-        self.altitude = flight_data.altitude
+    def flightdata_callback(self, altitude):
+        self.altitude = altitude
 
     def takeoff_callback(self, msg):
         self.time_of_takeoff = time.time()
