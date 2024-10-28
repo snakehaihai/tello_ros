@@ -10,8 +10,7 @@ import time
 import platform
 from geometry_msgs.msg import Twist, PoseStamped, Point, Pose, Quaternion
 from nav_msgs.msg import Path
-from std_msgs.msg import Empty, Bool, Int32, Float32
-# from flock_msgs.msg import Flip, FlightData
+from std_msgs.msg import Empty, Bool, Int32, Float32, String
 import signal
 import math
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
@@ -153,7 +152,7 @@ class TelloUI(object):
         rospy.Subscriber(self.pose_topic_name, PoseStamped, self.slam_callback) # should be changed to AirSLAM pose topic
         rospy.Subscriber(self.publish_prefix+'delta_pos', Point, self.delta_pos_callback)
         rospy.Subscriber(self.publish_prefix+'cmd_vel', Twist, self.speed_callback) # sub and pub
-        # rospy.Subscriber(self.publish_prefix+'flight_data', FlightData, self.flightdata_callback)
+        rospy.Subscriber(self.publish_prefix+'flight_data', String, self.flightdata_callback)
         rospy.Subscriber(self.publish_prefix+'allow_slam_control', Bool, self.allow_slam_control_callback) # sub and pub
         rospy.Subscriber(self.publish_prefix+'real_world_scale', Float32, self.real_world_scale_callback)
         rospy.Subscriber(self.publish_prefix+'real_world_pos', PoseStamped, self.real_world_pos_callback) 
@@ -1166,10 +1165,17 @@ class TelloUI(object):
             self.real_world_strigvar_z.set('%.4f'%(self.real_world_pos.z))
 
     def flightdata_callback(self, flight_data):
-        self.altitude = flight_data.altitude
+        data_str = flight_data.data
+        battery_start = data_str.find("Battery: ") + 9
+        battery_end = data_str.find("%")
+        battery = float(data_str[battery_start:battery_end])
+        height_start = data_str.find("Height: ") + 8
+        height_end = data_str.find("m")
+        altitude = float(data_str[height_start:height_end])
+        self.altitude = altitude
         if self.init_info_frame_flag:
             self.altitude_strigvar.set('%.4f'%(self.altitude))
-            self.battery_strigvar.set('%.2f'%(flight_data.battery_percent))
+            self.battery_strigvar.set('%.2f'%(battery))
             # self.flight_time_remaining_strigvar.set('%.2f'%(flight_data.estimated_flight_time_remaining))
         # try:
             # if self.altitude > 0.2:
