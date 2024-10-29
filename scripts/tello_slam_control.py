@@ -62,7 +62,7 @@ class TelloSlamControler(object):
         self.real_world = PoseStamped()
         self.rotated_position_0 = Point()
         self.pos_error = Point()
-        self.real_world_scale = 5.21
+        self.real_world_scale = 1.00
         self.pos_error_prev = Point()
         self.rotation_error_prev = 0
         self.pos_err_derivative = Point()

@@ -49,7 +49,7 @@ class TelloUI(object):
             self.pose_topic_name = '/AirSLAM/frame_pose'+str(self.id) # should be changed to AirSLAM pose topic
 
         print(self.publish_prefix)
-        self.point_command_pos = Point(0.0, 0.0, 1.0)
+        self.point_command_pos = Point(0.0, 0.0, 1.5)
         self.point_command_pos_yaw = 0.0
         self.command_pos = Pose()
         self.rotated_pos = Point()
@@ -87,7 +87,7 @@ class TelloUI(object):
         self.angle = 12.0
         self.angle_radian = self.angle / 180.0 * math.pi
 
-        self.real_world_scale = 3.9636
+        self.real_world_scale = 1.0000
         self.altitude = 0
 
         self.init_command_pos_frame_flag = False
@@ -174,6 +174,7 @@ class TelloUI(object):
         self.path_publisher = rospy.Publisher(self.publish_prefix+'path', Path, queue_size = 1)
         self.take_picure_publisher = rospy.Publisher(self.publish_prefix+'take_picure', Empty, queue_size=1)
         self.merge_coordinates_pub = rospy.Publisher(self.publish_prefix+'TransformerState', Bool, queue_size=1)
+        self.emergency_pub = rospy.Publisher(self.publish_prefix +'emergency', Empty, queue_size=1)
         
 
         self.publish_command()
@@ -280,6 +281,9 @@ class TelloUI(object):
 
         self.btn_calibrate_z = tki.Button(self.current_frame, text="Calibrate Z!", command=self.calibrate_z_callback, bg='yellow')
         self.btn_calibrate_z.grid(row=self.frame_row, column=1)#, padx=3, pady=3)
+        
+        self.btn_emergency_stop = tki.Button(self.current_frame, text="Emergency Stop", command=self.emergency_stop, bg='yellow')
+        self.btn_emergency_stop.grid(row=self.frame_row, column=2)#, padx=3, pady=3)
 
         self.row += 1
         self.column = 0
@@ -1132,6 +1136,9 @@ class TelloUI(object):
     def calibrate_z_callback(self):
         self.calibrate_real_world_scale_publisher.publish()
         self.btn_calibrate_z.configure(fg = 'red', bg = 'black')
+        
+    def emergency_stop(self):
+        self.emergency_pub.publish(Empty())
 
     def scan_room_left_callback(self):
         rospy.loginfo('pressed Scan Room Left!')
