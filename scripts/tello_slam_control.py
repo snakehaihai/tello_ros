@@ -3,7 +3,6 @@
 import rospy
 from geometry_msgs.msg import Twist, PoseStamped, Point, Pose, Quaternion, PoseArray
 from std_msgs.msg import Empty, Bool, Int32, Float32
-# from flock_msgs.msg import Flip, FlightData
 from nav_msgs.msg import Path
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 import time
@@ -84,7 +83,7 @@ class TelloSlamControler(object):
 
         self.rate = 30
 
-        self.angle = 12.0
+        self.angle = 0.0 # change from 12.0 to 0.0
         self.angle_radian = self.angle / 180.0 * math.pi
 
         self.control_mult_factor_x = 2
@@ -270,9 +269,11 @@ class TelloSlamControler(object):
         x_rotated = pos_error_copy.x*math.cos(self.orientation_alpha_rad) + pos_error_copy.y*math.sin(self.orientation_alpha_rad)
         y_rotated = pos_error_copy.y*math.cos(self.orientation_alpha_rad) - pos_error_copy.x*math.sin(self.orientation_alpha_rad)
 
+        x_change = y_rotated # change to djitellopy Coordinate System
+        y_change = x_rotated # change to djitellopy Coordinate system
 
-        self.pos_error.x = x_rotated
-        self.pos_error.y = y_rotated
+        self.pos_error.x = x_change
+        self.pos_error.y = y_change
 
         # self.pos_error.x = pos_error_copy.x
         # self.pos_error.y = pos_error_copy.y
@@ -299,7 +300,8 @@ class TelloSlamControler(object):
 
         # yaw = -(self.Kp_yaw*self.rotation_error_deg)
 
-        yaw = (self.Kp_yaw*self.rotation_error_deg + self.Kd_yaw*self.rotation_err_filtered_derivative)
+        yaw = (self.Kp_yaw*self.rotation_error_deg + self.Kd_yaw*self.rotation_err_filtered_derivative)/16
+        yaw = -yaw # change to djitellopy Coordinate System
         # yaw = 0
 
 
