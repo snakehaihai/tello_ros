@@ -54,17 +54,21 @@ class TelloNode:
     def __init__(self):
         rospy.init_node('tello_node', anonymous=True)
         
-        self.tello = Tello()
-        self.tello.connect()
-        rospy.loginfo("Connected to Tello successfully")
-        
         self.bridge = CvBridge()
         
         try:
             self.id = rospy.get_param('~ID', '')
+            self.drone_ip = rospy.get_param('~drone_ip', '')
+            self.video_port = rospy.get_param('~video_port', '')
         except KeyError:
             self.id = ''
+            self.drone_ip = '192.168.10.1'
+            self.video_port = '11111'
         self.publish_prefix = f"tello{self.id}/"
+        
+        self.tello = Tello(self.drone_ip)
+        self.tello.connect()
+        rospy.loginfo("Connected to Tello successfully")
         
         self.flight_data = FlightData()
         self.is_flying = False
@@ -87,10 +91,10 @@ class TelloNode:
 
     def init_subscribers(self):
         """Initialize all ROS topic subscribers"""
-        rospy.Subscriber('tello/cmd_vel', Twist, self.cmd_vel_callback)
-        rospy.Subscriber('tello/takeoff', Empty, self.takeoff_callback)
-        rospy.Subscriber('tello/land', Empty, self.land_callback)
-        rospy.Subscriber('tello/emergency', Empty, self.emergency_callback)
+        rospy.Subscriber(self.publish_prefix +'cmd_vel', Twist, self.cmd_vel_callback)
+        rospy.Subscriber(self.publish_prefix +'takeoff', Empty, self.takeoff_callback)
+        rospy.Subscriber(self.publish_prefix +'land', Empty, self.land_callback)
+        rospy.Subscriber(self.publish_prefix +'emergency', Empty, self.emergency_callback)
 
     def update_flight_data(self):
         """Update all flight data from Tello with correct units"""
@@ -146,6 +150,7 @@ class TelloNode:
 
         # Publish comprehensive status information
         status_msg = (
+            f"tello{self.id}: "
             f"Battery: {self.flight_data.battery_percent}%, "
             f"Height: {self.flight_data.altitude:.2f}m, "
             f"Flight time: {self.flight_data.flight_time}s, "
@@ -170,7 +175,7 @@ class TelloNode:
         if not self.tello.stream_on:
             return
             
-        frame = self.tello.get_frame_read().frame
+        frame = self.tello.get_frame_read(port=self.video_port).frame
         if frame is not None:
             try:
                 # Publish RGB image

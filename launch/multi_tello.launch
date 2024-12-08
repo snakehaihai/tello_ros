@@ -1,0 +1,14 @@
+<launch>
+    <!-- Launch single node to manage multiple Tellos -->
+    <node pkg="tello_ros" type="multi_tello_node.py" name="multi_tello_node" output="screen">
+        <rosparam>
+            tello_configs:
+                - id: "0"
+                  ip: "192.168.10.1"
+                  video_port: 11111
+                - id: "1"
+                  ip: "192.168.3.21"
+                  video_port: 11118
+        </rosparam>
+    </node>
+</launch>

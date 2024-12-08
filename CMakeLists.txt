@@ -167,6 +167,7 @@ include_directories(
 # )
 catkin_install_python(PROGRAMS
   scripts/tello_node.py
+  scripts/multi_tello_node.py
   scripts/take_pictures.py
   scripts/tello_keyboard_control.py
   scripts/tello_slam_control.py
