@@ -18,7 +18,7 @@ class TelloSlamControler(object):
         
 
         # Initialize ROS
-        rospy.init_node('tello_slam_control', anonymous=False)
+        rospy.init_node('tello_slam_control', anonymous=True)
 
         
         # rospy.Subscriber('land', Empty, self.land_callback)
@@ -171,7 +171,8 @@ class TelloSlamControler(object):
 
     def save_trajectory_to_log(self):
         if time.time() - self.last_time_saved_trajectory > 1:
-            with open('log_file_trajectory.txt', 'a') as file:
+            logfile = 'log_file_trajectory_{}.txt'.format(self.id)
+            with open(logfile, 'a') as file:
                 file.write("%.3f,%.3f,%.3f,%.1f,%.3f,%.3f,%.3f,%.1f\n"%(self.real_world.pose.position.x, self.real_world.pose.position.y, self.real_world.pose.position.z, self.slam_orientation_deg.z, self.command_pos.x, self.command_pos.y, self.command_pos.z, self.command_orientation_deg.z))
             self.last_time_saved_trajectory = time.time()
 

@@ -58,12 +58,10 @@ class TelloNode:
         
         try:
             self.id = rospy.get_param('~ID', '')
-            self.drone_ip = rospy.get_param('~drone_ip', '')
-            self.video_port = rospy.get_param('~video_port', '')
         except KeyError:
             self.id = ''
-            self.drone_ip = '192.168.10.1'
-            self.video_port = '11111'
+        self.drone_ip = rospy.get_param('~drone_ip', '192.168.10.1')
+        self.video_port = rospy.get_param('~video_port', '11111')
         self.publish_prefix = f"tello{self.id}/"
         
         self.tello = Tello(self.drone_ip)

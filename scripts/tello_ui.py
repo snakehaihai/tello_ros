@@ -25,7 +25,7 @@ class TelloUI(object):
 
     def __init__(self, root):
 
-        rospy.init_node('tello_ui', anonymous=False)
+        rospy.init_node('tello_ui', anonymous=True)
 
         # rospy.Subscriber('/command_pos', Point, self.command_pos_callback)
 
