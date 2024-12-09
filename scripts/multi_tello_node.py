@@ -100,7 +100,7 @@ class TelloInstance:
         try:
             self.tello = Tello(self.drone_ip)
             self.tello.connect()
-            self.tello.set_video_port(self.video_port)
+            # self.tello.set_video_port(self.video_port)
             rospy.loginfo(f"Connected to Tello {self.id} at {self.drone_ip}")
         except Exception as e:
             rospy.logerr(f"Failed to connect to Tello {self.id}: {str(e)}")
