@@ -28,29 +28,28 @@ class MultiTelloUI:
         self.trajectories = {
             'N': [
                 [0.0, 0.0, 0.0, 0],     # Start (will be replaced with current position)
-                [0.0, 0.0, 0.3, 0],     # Up
-                [0.5, 0.0, 0.0, 0],     # Forward
-                [-0.5, 0.0, 0.0, 0],    # Back to middle
-                [0.2, 0.0, 0.0, 0],    # Backward
-                [-0.2, 0.0, -0.3, 0],    # Back to start height
+                [0.0, 0.0, 0.4, 0],     # Up
+                [0.6, 0.0, 0.0, 0],    # N1
+                [-0.6, -0.5, 0.0, 0],    # N2
+                [0.6, 0.0, 0.0, 0],    # N3
+                [0.0, 0.0, -0.4, 0],    # Back to start height
             ],
             'T': [
                 [0.0, 0.0, 0.0, 0],     # Start
-                [0.0, 0.0, 0.3, 0],     # Up
-                [-1.0, 0.0, 0.0, 0],    # Left
-                [2.0, 0.0, 0.0, 0],     # Right
-                [-1.0, 0.0, 0.0, 0],    # Center
-                [0.0, -1.0, 0.0, 0],    # Down
-                [0.0, 1.0, -0.3, 0],    # Back to start height
+                [0.0, 0.0, 0.4, 0],     # Up
+                [0.0, -0.6, 0.0, 0],    # T1
+                [0.0, 0.3, 0.0, 0],     # T2
+                [-0.8, 0.0, 0.0, 0],    # T3
+                [0.0, 0.0, -0.4, 0],    # Back to start height
             ],
             'U': [
                 [0.0, 0.0, 0.0, 0],     # Start
-                [0.0, 0.0, 0.3, 0],     # Up
-                [0.0, 1.0, 0.0, 0],     # Forward top
-                [0.0, -2.0, 0.0, 0],    # Down
-                [1.0, 0.0, 0.0, 0],     # Right
-                [0.0, 2.0, 0.0, 0],     # Up right
-                [-1.0, -1.0, -0.3, 0],  # Back to start
+                [0.0, 0.0, 0.4, 0],     # Up
+                [-0.5, 0.0, 0.0, 0],     # U1
+                [-0.2, -0.2, 0.0, 0],    # U2
+                [0.2, -0.2, 0.0, 0],     # U3
+                [0.5, 0.0, 0.0, 0],     # U4
+                [0.0, 0.0, -0.4, 0],  # Back to start
             ]
         }
         
@@ -101,9 +100,11 @@ class MultiTelloUI:
                 'current_trajectory': None,
                 'has_position_data': False,
                 'allow_slam_control': False,
-                'start_position': None  # Store starting position for relative trajectories
+                'start_position': None,  # Store starting position for relative trajectories
+                'orientation': Point(),  # Store orientation data
+                'start_yaw': 0.0       # Store starting yaw for trajectories
             },
-            'trajectory_threshold': Point(0.3, 0.3, 0.3)
+            'trajectory_threshold': Point(0.1, 0.1, 0.1)
         }
         
         self.create_drone_widgets(drone_id)
@@ -185,13 +186,18 @@ class MultiTelloUI:
         widgets['altitude'] = tki.Label(status_frame, text="0.0m")
         widgets['altitude'].grid(row=0, column=3, padx=5)
         
-        # SLAM Position
-        slam_frame = tki.Frame(frame)
-        slam_frame.grid(row=3, column=0, columnspan=2, pady=5)
+        # Position display
+        position_frame = tki.Frame(frame)
+        position_frame.grid(row=3, column=0, columnspan=2, pady=5)
         
-        tki.Label(slam_frame, text="SLAM Position:").grid(row=0, column=0)
-        widgets['slam_pos'] = tki.Label(slam_frame, text="x: 0.0, y: 0.0, z: 0.0")
-        widgets['slam_pos'].grid(row=0, column=1, padx=5)
+        tki.Label(position_frame, text="Position:").grid(row=0, column=0)
+        widgets['position'] = tki.Label(position_frame, text="x: 0.0, y: 0.0, z: 0.0")
+        widgets['position'].grid(row=0, column=1, padx=5)
+        
+        # Add orientation display
+        tki.Label(position_frame, text="Yaw:").grid(row=0, column=2)
+        widgets['orientation'] = tki.Label(position_frame, text="0.0°")
+        widgets['orientation'].grid(row=0, column=3, padx=5)
         
         # Add trajectory points display
         trajectory_points_frame = tki.Frame(frame)
@@ -216,13 +222,13 @@ class MultiTelloUI:
         rospy.Subscriber(prefix + 'flight_data', String, 
                         lambda msg: self.flight_data_callback(msg, drone_id))
         
-        # SLAM position with updated topic
-        rospy.Subscriber("/exp" + str(drone_id) + '/AirSLAM/frame_pose', PoseStamped, 
-                        lambda msg: self.slam_callback(msg, drone_id))
-        
         # Real world position
         rospy.Subscriber(prefix + 'real_world_pos', PoseStamped,
                         lambda msg: self.real_world_pos_callback(msg, drone_id))
+        
+        # Orientation
+        rospy.Subscriber(prefix + 'orientation', Point,
+                        lambda msg: self.orientation_callback(msg, drone_id))
         
         # Allow SLAM control status
         rospy.Subscriber(prefix + 'allow_slam_control', Bool,
@@ -238,18 +244,18 @@ class MultiTelloUI:
             'allow_slam_control': rospy.Publisher(prefix + 'allow_slam_control', Bool, queue_size=1)
         }
 
-    def convert_to_absolute_trajectory(self, relative_trajectory, start_pos, scale):
-        """Convert relative trajectory to absolute based on starting position and scale"""
+    def convert_to_absolute_trajectory(self, relative_trajectory, start_pos, start_yaw, scale):
+        """Convert relative trajectory to absolute based on starting position, yaw and scale"""
         absolute_trajectory = []
-        current_pos = [start_pos.x, start_pos.y, start_pos.z, 0]
+        current_pos = [start_pos.x, start_pos.y, start_pos.z, start_yaw]
         
         for point in relative_trajectory:
-            # Scale x, y, z coordinates (but not yaw)
+            # Scale x, y, z coordinates and add yaw to the starting yaw
             absolute_point = [
                 current_pos[0] + point[0] * scale,
                 current_pos[1] + point[1] * scale,
-                current_pos[2] + point[2] * scale,
-                point[3]  # Keep original yaw
+                current_pos[2] + point[2],
+                start_yaw + point[3]  # Add relative yaw to starting yaw
             ]
             absolute_trajectory.append(absolute_point)
             # Update current position with scaled coordinates
@@ -297,8 +303,24 @@ class MultiTelloUI:
     def real_world_pos_callback(self, msg, drone_id):
         if drone_id not in self.drones:
             return
-        self.drones[drone_id]['data']['real_world_pos'] = msg.pose.position
+        pos = msg.pose.position
+        self.drones[drone_id]['data']['real_world_pos'] = pos
         self.drones[drone_id]['data']['has_position_data'] = True
+        
+        # Update position display
+        self.drones[drone_id]['widgets']['position'].config(
+            text=f"x: {pos.x:.2f}, y: {pos.y:.2f}, z: {pos.z:.2f}")
+        
+    def orientation_callback(self, msg, drone_id):
+        if drone_id not in self.drones:
+            return
+        
+        # Update orientation display (using z-axis rotation/yaw)
+        self.drones[drone_id]['widgets']['orientation'].config(
+            text=f"{msg.z:.1f}°")
+        
+        # Store the orientation data
+        self.drones[drone_id]['data']['orientation'] = msg
 
     def slam_control_callback(self, msg, drone_id):
         if drone_id not in self.drones:
@@ -331,6 +353,23 @@ class MultiTelloUI:
         else:
             drone['widgets']['slam_control'].configure(text="Enable SLAM Control", 
                                                      bg='yellow', fg='black')
+        # Grab current position and orientation
+        pos = drone['data']['real_world_pos']
+        yaw_rad = math.radians(drone['data']['orientation'].z)  # Convert yaw from degrees to radians
+        command = Pose()
+        command.position.x = pos.x
+        command.position.y = pos.y
+        command.position.z = pos.z
+        # Convert yaw (degrees) to quaternion
+        q = quaternion_from_euler(0, 0, yaw_rad)
+        command.orientation.x = q[0]
+        command.orientation.y = q[1]
+        command.orientation.z = q[2]
+        command.orientation.w = q[3]
+        # Publish command multiple times to ensure Tello stays in position
+        for _ in range(3):
+            drone['publishers']['command_pos'].publish(command)
+            rospy.sleep(0.1)
         rospy.loginfo(f"SLAM Control for drone {drone_id} {'enabled' if new_state else 'disabled'}")
 
     def start_trajectory(self, drone_id):
@@ -357,18 +396,21 @@ class MultiTelloUI:
             # Get current scale value
             scale = float(drone['widgets']['scale'].get())
             
-            # Store current position as start position
+            # Store current position and yaw as start position
             start_pos = drone['data']['real_world_pos']
+            start_yaw = drone['data']['orientation'].z  # Get current yaw from orientation
             drone['data']['start_position'] = start_pos
+            drone['data']['start_yaw'] = start_yaw
             
-            # Convert relative trajectory to absolute based on current position and scale
+            # Convert relative trajectory to absolute based on current position, yaw and scale
             relative_trajectory = self.trajectories[selected_trajectory]
-            absolute_trajectory = self.convert_to_absolute_trajectory(relative_trajectory, start_pos, scale)
+            absolute_trajectory = self.convert_to_absolute_trajectory(
+                relative_trajectory, start_pos, start_yaw, scale)
             
             # Update trajectory points display
             points_text = ""
             for i, point in enumerate(absolute_trajectory):
-                points_text += f"Point {i+1}: x={point[0]:.2f}, y={point[1]:.2f}, z={point[2]:.2f}\n"
+                points_text += f"Point {i+1}: x={point[0]:.2f}, y={point[1]:.2f}, z={point[2]:.2f}, yaw={point[3]:.1f}°\n"
             
             drone['widgets']['trajectory_points'].config(state='normal')
             drone['widgets']['trajectory_points'].delete(1.0, tki.END)
@@ -379,7 +421,7 @@ class MultiTelloUI:
             
             rospy.loginfo(f"Starting trajectory {selected_trajectory} for drone {drone_id} "
                         f"from position: x={start_pos.x:.2f}, y={start_pos.y:.2f}, z={start_pos.z:.2f} "
-                        f"with scale: {scale}")
+                        f"yaw={start_yaw:.1f}° with scale: {scale}")
             
             drone['data']['trajectory_active'] = True
             drone['data']['current_trajectory'] = absolute_trajectory
@@ -415,8 +457,9 @@ class MultiTelloUI:
             pose_stamped.pose.position.y = point[1]
             pose_stamped.pose.position.z = point[2]
             
-            # Convert yaw to quaternion
-            q = quaternion_from_euler(0, 0, math.radians(point[3]))
+            # Convert yaw (degrees) to quaternion
+            yaw_rad = math.radians(point[3])  # Convert yaw from degrees to radians
+            q = quaternion_from_euler(0, 0, yaw_rad)
             pose_stamped.pose.orientation.x = q[0]
             pose_stamped.pose.orientation.y = q[1]
             pose_stamped.pose.orientation.z = q[2]
@@ -429,10 +472,11 @@ class MultiTelloUI:
         while drone['data']['trajectory_active'] and not self.quit_flag and trajectory:
             current_point = trajectory[0]
             current_pos = drone['data']['real_world_pos']
+            current_yaw = drone['data']['orientation'].z
             
             # Update current point display
             point_index = len(self.trajectories[drone['widgets']['trajectory'].get()]) - len(trajectory)
-            status_text = f"Executing Point {point_index + 1}: x={current_point[0]:.2f}, y={current_point[1]:.2f}, z={current_point[2]:.2f}"
+            status_text = f"Executing Point {point_index + 1}: x={current_point[0]:.2f}, y={current_point[1]:.2f}, z={current_point[2]:.2f}, yaw={current_point[3]:.1f}°"
             drone['widgets']['current_point'].config(text=status_text)
             
             # Create and publish command position
@@ -441,8 +485,9 @@ class MultiTelloUI:
             command.position.y = current_point[1]
             command.position.z = current_point[2]
             
-            # Convert yaw to quaternion
-            q = quaternion_from_euler(0, 0, math.radians(current_point[3]))
+            # Convert yaw (degrees) to quaternion
+            yaw_rad = math.radians(current_point[3])  # Convert yaw from degrees to radians
+            q = quaternion_from_euler(0, 0, yaw_rad)
             command.orientation.x = q[0]
             command.orientation.y = q[1]
             command.orientation.z = q[2]
@@ -454,24 +499,29 @@ class MultiTelloUI:
                 rospy.sleep(0.1)
             
             # Log current status
-            rospy.loginfo(f"Drone {drone_id} - Target: ({current_point[0]:.2f}, {current_point[1]:.2f}, {current_point[2]:.2f})")
-            rospy.loginfo(f"Current: ({current_pos.x:.2f}, {current_pos.y:.2f}, {current_pos.z:.2f})")
+            rospy.loginfo(f"Drone {drone_id} - Target: ({current_point[0]:.2f}, {current_point[1]:.2f}, {current_point[2]:.2f}, {current_point[3]:.1f}°)")
+            rospy.loginfo(f"Current: ({current_pos.x:.2f}, {current_pos.y:.2f}, {current_pos.z:.2f}, {current_yaw:.1f}°)")
             
-            # Check if we've reached the current point
+            # Check if we've reached the current point (including yaw alignment)
+            # Note: You might want to adjust the yaw threshold based on your needs
+            yaw_threshold = 5.0  # 5 degrees threshold for yaw alignment
             if (abs(current_pos.x - current_point[0]) < threshold.x and
                 abs(current_pos.y - current_point[1]) < threshold.y and
-                abs(current_pos.z - current_point[2]) < threshold.z):
+                abs(current_pos.z - current_point[2]) < threshold.z and
+                abs(current_yaw - current_point[3]) < yaw_threshold):
+                
                 rospy.loginfo(f"Reached point {len(trajectory)} for drone {drone_id}")
                 trajectory.pop(0)
             else:
                 rospy.loginfo(f"Distance to target - x: {abs(current_pos.x - current_point[0]):.2f}, "
                             f"y: {abs(current_pos.y - current_point[1]):.2f}, "
-                            f"z: {abs(current_pos.z - current_point[2]):.2f}")
+                            f"z: {abs(current_pos.z - current_point[2]):.2f}, "
+                            f"yaw: {abs(current_yaw - current_point[3]):.1f}°")
             
             rospy.sleep(0.5)
+            
         # Reset display when finished
         drone['widgets']['current_point'].config(text="Trajectory completed")
-        
         rospy.loginfo(f"Trajectory finished for drone {drone_id}")
         drone['widgets']['start_trajectory'].configure(fg='black', bg='yellow')
         drone['data']['trajectory_active'] = False
