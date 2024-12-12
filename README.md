@@ -170,5 +170,3 @@ roslaunch tello_ros NTU.launch
 - [AirSLAM Repository](https://github.com/sair-lab/AirSLAM)
 - [DJITelloPy Repository](https://github.com/damiafuentes/DJITelloPy)
 # 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
