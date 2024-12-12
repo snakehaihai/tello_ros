@@ -9,7 +9,7 @@ A ROS node for controlling DJI Tello drones with comprehensive control, monitori
 
 ## Download Tello_ROS
 Download our respositoty.
-```
+```bash
 cd ~
 mkdir catkin_ws
 cd catkin_ws
@@ -19,7 +19,7 @@ git clone https://github.com/vvEverett/tello_ros.git
 ```
 ## Install modified DJITelloPy (with multi-drone video stream support)
 Install our version of DJITelloPy. We modified some functions to grab multi tello video stream.
-```
+```bash
 cd ~/catkin_ws/src/tello_ros/src
 git clone https://github.com/vvEverett/DJITelloPy.git
 cd DJITelloPy
@@ -29,12 +29,12 @@ pip install -e .
 You need to download and install AirSLAM or any other SLAM algorithm in same ROS working space if you want to use SLAM to locate Tello.
 
 For detailed installation guide, visit [AirSLAM Repository](https://github.com/vvEverett/AirSLAM) (We have made modifications to adapt for **tello_ros**).
-```
+```bash
 cd ~/catkin_ws/src
 git clone https://github.com/vvEverett/AirSLAM.git
 ```
 ## Build and Source
-```
+```bash
 cd ~/catkin_ws
 catkin_make
 source ~/catkin_ws/devel/setup.bash
@@ -89,7 +89,7 @@ For each drone (replace {ID} with drone identifier):
 # 🎮Usage
 ## Basic Functions
 ### Take Pictures
-```
+```bash
 # Launch camera node
 roslaunch tello_ros take_pictures.launch
 
@@ -97,7 +97,7 @@ roslaunch tello_ros take_pictures.launch
 rosservice call /tello/take_picture
 ```
 ### Flight Control Examples
-```
+```bash
 # Takeoff and Land control
 rostopic pub /tello/takeoff std_msgs/Empty "{}"
 rostopic pub /tello/land std_msgs/Empty "{}"
@@ -113,24 +113,24 @@ angular:
 rostopic pub /tello/emergency std_msgs/Empty "{}"
 ```
 ### Keyboard Control
-```
+```bash
 roslaunch tello_ros keyboard_control.launch
 ```
 ### Single Drone SLAM UI (With AirSLAM)
-```
+```bash
 roslaunch tello_ros reloc_tello_slam.launch
 ```
 ## Multi-Drone Operations
 ### Launch Multiple Drones
-```
+```bash
 roslaunch tello_ros multi-tello.launch
 ```
 ### Multi-Drone SLAM UI (With AirSLAM)
-```
+```bash
 roslaunch tello_ros reloc_tello_slam_multi.launch
 ```
 ### Formation Control UI (With AirSLAM)
-```
+```bash
 roslaunch tello_ros NTU.launch
 ```
 
@@ -170,3 +170,4 @@ roslaunch tello_ros NTU.launch
 - [AirSLAM Repository](https://github.com/sair-lab/AirSLAM)
 - [DJITelloPy Repository](https://github.com/damiafuentes/DJITelloPy)
 # 📄 License
+
