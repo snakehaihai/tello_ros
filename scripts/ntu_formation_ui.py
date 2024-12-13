@@ -56,14 +56,71 @@ class MultiTelloUI:
         # Create main container frames
         self.control_frame = tki.Frame(root, relief=tki.SUNKEN)
         self.control_frame.grid(row=0, column=0, padx=5, pady=5)
-        
+
+        # Add batch control frame with adjusted layout
+        self.batch_control_frame = tki.LabelFrame(root, text="Batch Controls", relief=tki.SUNKEN)
+        self.batch_control_frame.grid(row=0, column=1, padx=5, pady=5, sticky='nsew')
+
+        # Create two columns for batch controls
+        left_column = tki.Frame(self.batch_control_frame)
+        left_column.grid(row=0, column=0, padx=5, pady=5)
+
+        right_column = tki.Frame(self.batch_control_frame)
+        right_column.grid(row=0, column=1, padx=5, pady=5)
+
+        # Left column buttons
+        self.batch_takeoff_btn = tki.Button(left_column,
+                                        text="Takeoff All",
+                                        command=self.takeoff_all,
+                                        bg='yellow',
+                                        width=15)
+        self.batch_takeoff_btn.grid(row=0, column=0, padx=5, pady=5)
+
+        self.batch_land_btn = tki.Button(left_column,
+                                    text="Land All",
+                                    command=self.land_all,
+                                    bg='white',
+                                    width=15)
+        self.batch_land_btn.grid(row=1, column=0, padx=5, pady=5)
+
+        self.batch_emergency_btn = tki.Button(left_column,
+                                            text="EMERGENCY ALL",
+                                            command=self.emergency_all,
+                                            bg='red',
+                                            fg='white',
+                                            width=15)
+        self.batch_emergency_btn.grid(row=2, column=0, padx=5, pady=5)
+
+        # Right column buttons
+        self.batch_slam_btn = tki.Button(right_column,
+                                    text="Enable All SLAM",
+                                    command=self.toggle_all_slam_control,
+                                    bg='yellow',
+                                    width=15)
+        self.batch_slam_btn.grid(row=0, column=0, padx=5, pady=5)
+
+        self.batch_start_trajectory_btn = tki.Button(right_column,
+                                                text="Start All Trajectories",
+                                                command=self.start_all_trajectories,
+                                                bg='yellow',
+                                                width=15)
+        self.batch_start_trajectory_btn.grid(row=1, column=0, padx=5, pady=5)
+
+        self.batch_stop_trajectory_btn = tki.Button(right_column,
+                                                text="Stop All Trajectories",
+                                                command=self.stop_all_trajectories,
+                                                bg='white',
+                                                width=15)
+        self.batch_stop_trajectory_btn.grid(row=2, column=0, padx=5, pady=5)
+
+        # Drone frames at the bottom
         self.drone_frames = tki.Frame(root, relief=tki.SUNKEN)
-        self.drone_frames.grid(row=1, column=0, padx=5, pady=5)
-        
-        # Add drone button
+        self.drone_frames.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky='ew')
+
+        # Add drone button in control frame
         self.add_drone_button = tki.Button(self.control_frame, text="Add Drone", command=self.add_drone_dialog)
         self.add_drone_button.grid(row=0, column=0, padx=5, pady=5)
-        
+
         # Set window title
         self.root.wm_title("Multi-Tello Controller")
         self.root.wm_protocol("WM_DELETE_WINDOW", self.onClose)
@@ -543,6 +600,85 @@ class MultiTelloUI:
         if drone_id in self.drones:
             self.stop_trajectory(drone_id)
             self.drones[drone_id]['publishers']['emergency'].publish(Empty())
+
+    def takeoff_all(self):
+        """Command all drones to take off"""
+        for drone_id in self.drones:
+            self.takeoff(drone_id)
+        self.batch_takeoff_btn.configure(fg='green', bg='white')
+        self.batch_land_btn.configure(fg='black', bg='yellow')
+
+    def land_all(self):
+        """Command all drones to land"""
+        for drone_id in self.drones:
+            self.land(drone_id)
+        self.batch_takeoff_btn.configure(fg='black', bg='yellow')
+        self.batch_land_btn.configure(fg='green', bg='white')
+
+    def emergency_all(self):
+        """Emergency stop all drones"""
+        for drone_id in self.drones:
+            self.emergency_stop(drone_id)
+
+    def start_all_trajectories(self):
+        """Start trajectories for all drones"""
+        for drone_id in self.drones:
+            self.start_trajectory(drone_id)
+        self.batch_start_trajectory_btn.configure(fg='green', bg='white')
+
+    def stop_all_trajectories(self):
+        """Stop trajectories for all drones"""
+        for drone_id in self.drones:
+            self.stop_trajectory(drone_id)
+        self.batch_start_trajectory_btn.configure(fg='black', bg='yellow')
+
+    def toggle_all_slam_control(self):
+        """Toggle SLAM control for all drones"""
+        # Check if any drone has SLAM control enabled
+        any_enabled = any(drone['data']['allow_slam_control'] for drone in self.drones.values())
+        
+        # Set new state based on current state
+        new_state = not any_enabled
+        
+        for drone_id in self.drones:
+            drone = self.drones[drone_id]
+            drone['data']['allow_slam_control'] = new_state
+            drone['publishers']['allow_slam_control'].publish(Bool(new_state))
+            
+            # Update button state
+            if new_state:
+                drone['widgets']['slam_control'].configure(text="Disable SLAM Control", 
+                                                         bg='black', fg='yellow')
+            else:
+                drone['widgets']['slam_control'].configure(text="Enable SLAM Control", 
+                                                         bg='yellow', fg='black')
+            
+            # Grab current position and orientation
+            if new_state:
+                pos = drone['data']['real_world_pos']
+                yaw_rad = math.radians(drone['data']['orientation'].z)
+                command = Pose()
+                command.position.x = pos.x
+                command.position.y = pos.y
+                command.position.z = pos.z
+                q = quaternion_from_euler(0, 0, yaw_rad)
+                command.orientation.x = q[0]
+                command.orientation.y = q[1]
+                command.orientation.z = q[2]
+                command.orientation.w = q[3]
+                for _ in range(3):
+                    drone['publishers']['command_pos'].publish(command)
+                    rospy.sleep(0.1)
+        
+        # Update batch button text
+        if new_state:
+            self.batch_slam_btn.configure(text="Disable All SLAM", 
+                                        bg='black', fg='yellow')
+        else:
+            self.batch_slam_btn.configure(text="Enable All SLAM", 
+                                        bg='yellow', fg='black')
+        
+        rospy.loginfo(f"SLAM Control for all drones {'enabled' if new_state else 'disabled'}")
 
     def onClose(self, *args):
         print("[INFO] closing...")
