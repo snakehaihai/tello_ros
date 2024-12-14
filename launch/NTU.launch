@@ -5,6 +5,12 @@
     <arg name="map_root" default="$(find air_slam)/debug/realsense" />
     <arg name="visualization" default="true" />
 
+    <!-- Rosbag recording arguments -->
+    <arg name="record" default="true" doc="Enable/disable rosbag recording"/>
+    <arg name="bag_path" default="$(env HOME)/bags" doc="Directory to store the rosbag files"/>
+    <!-- Include recording launch -->
+    <include file="$(find tello_ros)/launch/record.launch" />
+
     <!-- Tello nodes -->
     <node pkg="tello_ros" type="multi_tello_node.py" name="multi_tello_node" output="screen">
         <rosparam>
@@ -23,6 +29,8 @@
 
     <!-- Formation Control UI node -->
     <node pkg="tello_ros" type="ntu_formation_ui.py" name="ntu_formation_ui" output="screen" />
+    <node pkg="tello_ros" type="mapline_filter.py" name="mapline_filter" output="screen"></node>
+
 
     <!-- SLAM Control nodes -->
     <node pkg="tello_ros" type="tello_slam_control.py" name="tello_slam_control_0" output="screen">

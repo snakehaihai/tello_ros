@@ -3,6 +3,34 @@
     <node name="tello_node" pkg="tello_ros" type="tello_node.py" output="screen"/>
     <node name="tello_ui" pkg="tello_ros" type="tello_ui.py" output="screen"/>
     <node name="tello_slam_control" pkg="tello_ros" type="tello_slam_control.py" output="screen"/>
+    <!-- Rosbag recording arguments -->
+    <arg name="record" default="false" doc="Enable/disable rosbag recording"/>
+    <arg name="bag_path" default="$(env HOME)/bags" doc="Directory to store the rosbag files"/>
+    <!-- Rosbag recording node -->
+    <node if="$(arg record)" pkg="rosbag" type="record" name="rosbag_recorder" output="screen"
+        args="-o $(arg bag_path)/tello_formation
+                /tello/altitude
+                /tello/battery
+                /tello/flight_data
+                /tello/flight/attitude
+                /tello/flight/velocity
+                /tello/real_world_pos
+                /tello/orientation
+                /tello/delta_pos
+                /tello/path_trail
+                /tello/pose_trail
+                /AirSLAM/frame_pose
+                /AirSLAM/feature
+                /AirSLAM/LatestOdometry
+                /AirSLAM/odometry
+                /AirSLAM/map
+                /AirSLAM/mapline
+                /AirSLAM/reloc/matches
+                /AirSLAM/reloc/pose
+                /AirSLAM/reloc/trajectory
+
+                -j">
+    </node>
 
     <!-- AirSLAM arguments -->
     <arg name="config_path" default="$(find air_slam)/configs/relocalization/reloc_tello.yaml" />

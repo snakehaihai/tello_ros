@@ -1,0 +1,68 @@
+<launch>
+    <!-- Rosbag recording arguments -->
+    <arg name="record" default="true" doc="Enable/disable rosbag recording"/>
+    <arg name="bag_path" default="$(env HOME)/bags" doc="Directory to store the rosbag files"/>
+    <!-- Rosbag recording node -->
+    <node if="$(arg record)" pkg="rosbag" type="record" name="rosbag_recorder" output="screen"
+        args="-o $(arg bag_path)/tello_formation
+                /tello0/altitude
+                /tello0/battery
+                /tello0/flight_data
+                /tello0/flight/attitude
+                /tello0/flight/velocity
+                /tello0/real_world_pos
+                /tello0/orientation
+                /tello0/delta_pos
+                /tello0/path_trail
+                /tello0/pose_trail
+                /exp0/AirSLAM/frame_pose
+                /exp0/AirSLAM/LatestOdometry
+                /exp0/AirSLAM/odometry
+                /exp0/AirSLAM/map
+                /exp0/AirSLAM/mapline
+                /exp0/AirSLAM/reloc/matches
+                /exp0/AirSLAM/reloc/pose
+                /exp0/AirSLAM/reloc/trajectory
+                /exp0/AirSLAM/filtered_maplines
+
+                /tello1/altitude
+                /tello1/battery
+                /tello1/flight_data
+                /tello1/flight/attitude
+                /tello1/flight/velocity
+                /tello1/real_world_pos
+                /tello1/orientation
+                /tello1/delta_pos
+                /tello1/path_trail
+                /tello1/pose_trail
+                /exp1/AirSLAM/frame_pose
+                /exp1/AirSLAM/LatestOdometry
+                /exp1/AirSLAM/odometry
+                /exp1/AirSLAM/map
+                /exp1/AirSLAM/mapline
+                /exp1/AirSLAM/reloc/matches
+                /exp1/AirSLAM/reloc/pose
+                /exp1/AirSLAM/reloc/trajectory
+
+                /tello2/altitude
+                /tello2/battery
+                /tello2/flight_data
+                /tello2/flight/attitude
+                /tello2/flight/velocity
+                /tello2/real_world_pos
+                /tello2/orientation
+                /tello2/delta_pos
+                /tello2/path_trail
+                /tello2/pose_trail
+                /exp2/AirSLAM/frame_pose
+                /exp2/AirSLAM/LatestOdometry
+                /exp2/AirSLAM/odometry
+                /exp2/AirSLAM/map
+                /exp2/AirSLAM/mapline
+                /exp2/AirSLAM/reloc/matches
+                /exp2/AirSLAM/reloc/pose
+                /exp2/AirSLAM/reloc/trajectory
+
+                -j">
+    </node>
+</launch>
