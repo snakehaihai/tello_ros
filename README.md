@@ -1,5 +1,11 @@
 # Tello_ROS
 A ROS node for controlling DJI Tello drones with comprehensive control, monitoring, and multi-drone formation capabilities.
+
+# System Overview
+![System Overview](supplimentary_material/SystemOverview.png)
+## Hardware Architecture
+![Hardware Architecture](supplimentary_material/HardwareArchitecture.png)
+
 # 💻Download and Install
 ## Test Environment
 **Dependencies**
@@ -134,6 +140,11 @@ roslaunch tello_ros reloc_tello_slam_multi.launch
 roslaunch tello_ros NTU.launch
 ```
 
+## User Interface
+### Single Drone UI
+![SUI](supplimentary_material/SUI.png)
+### Multiple Drone UI
+![MUI](supplimentary_material/MUI.png)
 # ⚠️ Safety Features
 
 - Independent video stream handler with auto-retry mechanism
