@@ -15,6 +15,7 @@
                 /tello0/delta_pos
                 /tello0/path_trail
                 /tello0/pose_trail
+                /tello0/camera/image_gray
                 /exp0/AirSLAM/frame_pose
                 /exp0/AirSLAM/LatestOdometry
                 /exp0/AirSLAM/odometry
@@ -35,6 +36,7 @@
                 /tello1/delta_pos
                 /tello1/path_trail
                 /tello1/pose_trail
+                /tello1/camera/image_gray
                 /exp1/AirSLAM/frame_pose
                 /exp1/AirSLAM/LatestOdometry
                 /exp1/AirSLAM/odometry
@@ -54,6 +56,7 @@
                 /tello2/delta_pos
                 /tello2/path_trail
                 /tello2/pose_trail
+                /tello2/camera/image_gray
                 /exp2/AirSLAM/frame_pose
                 /exp2/AirSLAM/LatestOdometry
                 /exp2/AirSLAM/odometry

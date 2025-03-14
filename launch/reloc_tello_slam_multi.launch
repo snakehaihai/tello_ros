@@ -1,4 +1,5 @@
 <launch>
+    <!-- This is the example launch file for the multi drone SLAM. -->
     <!-- Tello nodes -->
     <node pkg="tello_ros" type="multi_tello_node.py" name="multi_tello_node" output="screen">
         <rosparam>

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# This script provides a simple GUI to control multiple Tello drones using ROS
+# It allows you to takeoff, land, and control drones using SLAM and relative trajectories
+# The script uses Tkinter for the GUI and rospy for ROS communication
 import rospy
 import tkinter as tki
 from tkinter import ttk
@@ -22,6 +25,12 @@ class MultiTelloUI:
         self.root = root
         self.drones = {}  # Dictionary to store drone data
         
+        # Define initial positions for each drones (xyz in m, yaw in degrees)
+        self.initial_positions = {
+            '0': {'x': 1.75, 'y': 1.35, 'z': 1.8, 'yaw': 30.0},
+            '1': {'x': -0.60, 'y': 0.45, 'z': 1.8, 'yaw': -25.0},
+            '2': {'x': 0.20, 'y': 0.45, 'z': 1.8, 'yaw': -25.0}
+        }
         # Base scale for trajectories (can be adjusted by scale factor)
         self.base_scale = 1.0
         # Define relative trajectories (will be adjusted based on current position)
@@ -29,26 +38,25 @@ class MultiTelloUI:
             'N': [
                 [0.0, 0.0, 0.0, 0],     # Start (will be replaced with current position)
                 [0.0, 0.0, 0.4, 0],     # Up
-                [0.6, 0.0, 0.0, 0],    # N1
-                [-0.6, -0.5, 0.0, 0],    # N2
-                [0.6, 0.0, 0.0, 0],    # N3
+                [1.1, 0.0, 0.0, 0],    # N1
+                [-1.1, -0.85, 0.0, 0],    # N2
+                [1.1, 0.0, 0.0, 0],    # N3
                 [0.0, 0.0, -0.4, 0],    # Back to start height
             ],
             'T': [
                 [0.0, 0.0, 0.0, 0],     # Start
                 [0.0, 0.0, 0.4, 0],     # Up
-                [0.0, -0.6, 0.0, 0],    # T1
-                [0.0, 0.3, 0.0, 0],     # T2
-                [-0.8, 0.0, 0.0, 0],    # T3
+                [0.2, -0.85, 0.0, 0],    # T1
+                [-0.1, 0.5, 0.0, 0],     # T2
+                [-1.1, -0.1, 0.0, 0],    # T3
                 [0.0, 0.0, -0.4, 0],    # Back to start height
             ],
             'U': [
                 [0.0, 0.0, 0.0, 0],     # Start
                 [0.0, 0.0, 0.4, 0],     # Up
-                [-0.5, 0.0, 0.0, 0],     # U1
-                [-0.2, -0.2, 0.0, 0],    # U2
-                [0.2, -0.2, 0.0, 0],     # U3
-                [0.5, 0.0, 0.0, 0],     # U4
+                [-0.9, 0.0, 0.0, 0],     # U1
+                [0.0, -0.65, 0.0, 0],    # U2
+                [1.0, 0.0, 0.0, 0],     # U3
                 [0.0, 0.0, -0.4, 0],  # Back to start
             ]
         }
@@ -112,6 +120,13 @@ class MultiTelloUI:
                                                 bg='white',
                                                 width=15)
         self.batch_stop_trajectory_btn.grid(row=2, column=0, padx=5, pady=5)
+        
+        self.batch_original_position_btn = tki.Button(right_column,
+                                                text="Fly to Original Position",
+                                                command=self.original_position,
+                                                bg='white',
+                                                width=15)
+        self.batch_original_position_btn.grid(row=3, column=0, padx=5, pady=5)
 
         # Drone frames at the bottom
         self.drone_frames = tki.Frame(root, relief=tki.SUNKEN)
@@ -631,6 +646,28 @@ class MultiTelloUI:
         for drone_id in self.drones:
             self.stop_trajectory(drone_id)
         self.batch_start_trajectory_btn.configure(fg='black', bg='yellow')
+        
+    def original_position(self):
+        """All drones fly to their original position"""
+        for drone_id in self.drones:
+            drone = self.drones[drone_id]
+            init_pos = self.initial_positions.get(drone_id, {
+                'x': 0.0, 'y': 0.0, 'z': 1.4, 'yaw': -90.0
+            })
+            yaw_rad = math.radians(init_pos['yaw'])
+            
+            command = Pose()
+            command.position.x = init_pos['x']
+            command.position.y = init_pos['y'] 
+            command.position.z = init_pos['z']
+            q = quaternion_from_euler(0, 0, yaw_rad)
+            command.orientation.x = q[0]
+            command.orientation.y = q[1]
+            command.orientation.z = q[2]
+            command.orientation.w = q[3]
+            for _ in range(3):
+                drone['publishers']['command_pos'].publish(command)
+                rospy.sleep(0.1)
 
     def toggle_all_slam_control(self):
         """Toggle SLAM control for all drones"""

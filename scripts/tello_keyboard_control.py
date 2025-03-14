@@ -15,6 +15,7 @@ class TelloKeyboardNode:
         The controls are:
             - T: Takeoff
             - L: Land
+            - E: Emergency stop
             - Arrow keys: Forward, backward, left and right.
             - A and D: Counter clockwise and clockwise rotations (yaw)
             - W and S: Up and down.
@@ -24,6 +25,7 @@ class TelloKeyboardNode:
         操作说明：
             T：起飞
             L：降落
+            E：急停
             方向键：前后左右
             A和D：逆时针与顺时针转向
             W和S：上升与下降
@@ -41,13 +43,14 @@ class TelloKeyboardNode:
         self.cmd_vel_pub = rospy.Publisher('tello/cmd_vel', Twist, queue_size=10)
         self.takeoff_pub = rospy.Publisher('tello/takeoff', Empty, queue_size=1)
         self.land_pub = rospy.Publisher('tello/land', Empty, queue_size=1)
+        self.emergency_pub = rospy.Publisher('tello/emergency', Empty, queue_size=1)
 
         # ROS subscribers
         rospy.Subscriber('tello/camera/image_raw', Image, self.image_callback)
         rospy.Subscriber('tello/battery', Int32, self.battery_callback)
 
         # Control variables
-        self.speed = 50
+        self.speed = 20
         self.send_rc_control = False
 
         # CV Bridge
@@ -125,6 +128,9 @@ class TelloKeyboardNode:
             self.send_rc_control = True
         elif key == pygame.K_l:
             self.land_pub.publish(Empty())
+            self.send_rc_control = False
+        elif key == pygame.K_e:
+            self.emergency_pub.publish(Empty())
             self.send_rc_control = False
 
 if __name__ == '__main__':

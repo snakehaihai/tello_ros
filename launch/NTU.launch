@@ -1,15 +1,18 @@
 <launch>
-    <!-- Common arguments -->
+    <!-- Common AirSLAM arguments -->
     <arg name="model_dir" default="$(find air_slam)/output" />
     <arg name="voc_path" default="$(find air_slam)/voc/point_voc_L4.bin" />
     <arg name="map_root" default="$(find air_slam)/debug/realsense" />
     <arg name="visualization" default="true" />
 
     <!-- Rosbag recording arguments -->
-    <arg name="record" default="true" doc="Enable/disable rosbag recording"/>
-    <arg name="bag_path" default="$(env HOME)/bags" doc="Directory to store the rosbag files"/>
+    <arg name="record" default="false" doc="Enable/disable rosbag recording"/>
+    <arg name="bag_path" default="/media/orin/tello_ros_bag" doc="Directory to store the rosbag files"/>
     <!-- Include recording launch -->
-    <include file="$(find tello_ros)/launch/record.launch" />
+    <include file="$(find tello_ros)/launch/record.launch">
+        <arg name="record" value="$(arg record)"/>
+        <arg name="bag_path" value="$(arg bag_path)"/>
+    </include>
 
     <!-- Tello nodes -->
     <node pkg="tello_ros" type="multi_tello_node.py" name="multi_tello_node" output="screen">
@@ -28,7 +31,7 @@
     </node>
 
     <!-- Formation Control UI node -->
-    <node pkg="tello_ros" type="ntu_formation_ui.py" name="ntu_formation_ui" output="screen" />
+    <node pkg="tello_ros" type="multi_tello_ui.py" name="ntu_formation_ui" output="screen" />
     <node pkg="tello_ros" type="mapline_filter.py" name="mapline_filter" output="screen"></node>
 
 
