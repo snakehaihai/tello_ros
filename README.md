@@ -1,50 +1,79 @@
 # Tello_ROS
-A ROS node for controlling DJI Tello drones with comprehensive control, monitoring, and multi-drone formation capabilities.
+A comprehensive ROS package for controlling DJI Tello drones with extensive capabilities for multi-drone coordination, real-time monitoring, and infrastructure-free visual SLAM localization. This repository is part of the AirSwarm system, which aims to democratize multi-UAV research by enabling low-cost commercially available drones to perform complex coordination tasks.
 
-# System Overview
+# Overview
+The `tello_ros` package provides a complete ROS interface for DJI Tello drones, enabling:
+
+- Comprehensive drone control through ROS topics
+- Video streaming and processing capabilities
+- Infrastructure-free localization using visual SLAM
+- Multi-drone formation flying without external positioning systems
+- User-friendly control interfaces
+- Robust safety features
+
+This package bridges the gap between ROS's powerful robotics ecosystem and the affordable Tello drone platform, making it ideal for research, education, and hobby projects.
+# System Architecture
 ![System Overview](supplimentary_material/SystemOverview.png)
-## Hardware Architecture
-![Hardware Architecture](supplimentary_material/HardwareArchitecture.png)
+AirSwarm system consists of three primary functional layers:
 
-# 💻Download and Install
-## Test Environment
-**Dependencies**
-- Ubuntu 22.04
+**Mapping Subsystem**: Implements multi-session mapping using stereo cameras, integrating visual-inertial odometry for initial pose estimation and local mapping with feature detection.
+
+**Communication Architecture**: Establishes a centralized network topology where COTS drones communicate via WiFi to Raspberry Pi units. These units serve as network bridges, utilizing a fixed-to-reconfigurable IP architecture that interfaces with ROS Topics.
+
+**Control Framework [This package]**: Implements a versatile control stack compatible with various COTS drones equipped with video feedback for planning and control functions with lightweight relocalization.
+# 💻Installation
+## Prerequisites
 - ROS Noetic
 - Python 3.10.12
+- Git
 
-## Download Tello_ROS
-Download our respositoty.
+## Setup
+
+Create a catkin workspace:
 ```bash
-cd ~
-mkdir catkin_ws
-cd catkin_ws
-mkdir src
-cd src
+mkdir -p ~/catkin_ws/src
+cd ~/catkin_ws/src
+```
+
+Clone the repository:
+```bash
 git clone https://github.com/vvEverett/tello_ros.git
 ```
-## Install modified DJITelloPy (with multi-drone video stream support)
-Install our version of DJITelloPy. We modified some functions to grab multi tello video stream.
+
+Build and source the workspace:
+```bash
+cd ~/catkin_ws
+catkin_make
+source ~/catkin_ws/devel/setup.bash
+```
+
+Add the setup source to your `.bashrc` for convenience:
+```bash
+echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+```
+## Modified DJITelloPy Installation
+
+Our package uses a modified version of DJITelloPy that supports multi-drone video streaming:
+
 ```bash
 cd ~/catkin_ws/src/tello_ros/src
 git clone https://github.com/vvEverett/DJITelloPy.git
 cd DJITelloPy
 pip install -e .
 ```
-## Install AirSLAM (Optional, for drone localization)
-You need to download and install AirSLAM or any other SLAM algorithm in same ROS working space if you want to use SLAM to locate Tello.
+## AirSLAM (Optional)
 
-For detailed installation guide, visit [AirSLAM Repository](https://github.com/vvEverett/AirSLAM) (We have made modifications to adapt for **tello_ros**).
+For SLAM-based localization and navigation:
+
 ```bash
 cd ~/catkin_ws/src
 git clone https://github.com/vvEverett/AirSLAM.git
-```
-## Build and Source
-```bash
 cd ~/catkin_ws
 catkin_make
-source ~/catkin_ws/devel/setup.bash
 ```
+
+For detailed AirSLAM installation instructions, visit the [AirSLAM Repository](https://github.com/vvEverett/AirSLAM).
 # 🚁 Features
 ## Node Parameters
 ### Single Drone Configuration
@@ -55,7 +84,9 @@ source ~/catkin_ws/devel/setup.bash
 | ~drone_ip | '192.168.10.1' | Drone IP address |
 | ~video_port | '11111' | Video stream port |
 ### Multi-Drone Configuration
-Configuration in launch file:
+
+Example configuration in a launch file:
+
 ```yaml
 tello_configs:
   - id: "0"
@@ -93,7 +124,7 @@ For each drone (replace {ID} with drone identifier):
 | tello{ID}/land | std_msgs/Empty | Landing command |
 | tello{ID}/emergency | std_msgs/Empty | Emergency stop |
 # 🎮Usage
-## Basic Functions
+## Basic Operations
 ### Take Pictures
 ```bash
 # Launch camera node
@@ -102,83 +133,90 @@ roslaunch tello_ros take_pictures.launch
 # Trigger picture capture
 rosservice call /tello/take_picture
 ```
-### Flight Control Examples
+### Basic Commands
 ```bash
-# Takeoff and Land control
+# Takeoff
 rostopic pub /tello/takeoff std_msgs/Empty "{}"
+
+# Land
 rostopic pub /tello/land std_msgs/Empty "{}"
 
-# Velocity control
-rostopic pub /tello/cmd_vel geometry_msgs/Twist "linear:
-  x: 0.5  # Forward/backward (-1.0 to 1.0)
-  y: 0.0  # Left/right (-1.0 to 1.0)
-  z: 0.0  # Up/down (-1.0 to 1.0)
-angular:
-  z: 0.0" # Yaw rotation (-1.0 to 1.0)
 # Emergency Stop
 rostopic pub /tello/emergency std_msgs/Empty "{}"
+```
+
+###  Velocity Control
+```bash
+rostopic pub /tello/cmd_vel geometry_msgs/Twist "
+linear:
+  x: 0.5
+  y: 0.0
+  z: 0.0
+angular:
+  z: 0.0
+  " 
 ```
 ### Keyboard Control
 ```bash
 roslaunch tello_ros keyboard_control.launch
 ```
-### Single Drone SLAM UI (With AirSLAM)
+### SLAM-Enabled Control
 ```bash
 roslaunch tello_ros reloc_tello_slam.launch
 ```
 ## Multi-Drone Operations
-### Launch Multiple Drones
-```bash
-roslaunch tello_ros multi-tello.launch
-```
-### Multi-Drone SLAM UI (With AirSLAM)
+
+### Multi-Drone SLAM
 ```bash
 roslaunch tello_ros reloc_tello_slam_multi.launch
 ```
-### Formation Control UI (With AirSLAM)
+Multi-Tello drone connectivity with integrated SLAM control and visualization interface.
+### Advanced Use Case - NTU Formation Flight
+Our system supports sophisticated multi-drone formations, such as having three drones trace "NTU" letters in 3D space.
 ```bash
 roslaunch tello_ros NTU.launch
 ```
+- **Swarm Initialization**
+  - Dynamic IP/port configuration via ROS parameter server
+  - Automatic node spawning for each drone
+  - Video stream port assignment management
 
-## User Interface
-### Single Drone UI
-![SUI](supplimentary_material/SUI.png)
-### Multiple Drone UI
-![MUI](supplimentary_material/MUI.png)
+- **Integrated Components**
+  - `multi_tello_node.py`: Central control node
+  - `multi_tello_ui.py`: Swarm control GUI
+  - `tello_slam_control.py`: SLAM integration module
+
+## Visual Interfaces
+| Interface Type | Screenshot | Description |
+|:-------------:|:----------:|:------------|
+| **Single Drone UI** | ![Single Drone UI](supplimentary_material/SUI.png) | A user-friendly interface for controlling individual drones with features including real-time video feed, position and attitude display, manual control options, and trajectory planning capabilities. |
+| **Multiple Drone UI** | ![Multiple Drone UI](supplimentary_material/MUI.png) | Advanced management system for simultaneous control of multiple drones, offering formation control, individual drone status monitoring, synchronization options, and convenient batch commands for coordinated operations. |
 # ⚠️ Safety Features
-
-- Independent video stream handler with auto-retry mechanism
-- Thread-safe frame capture and processing
-- Emergency stop via topic
-- Automatic landing on node shutdown
-- Exception handling for connection issues
-- Continuous status monitoring and logging
-- Separate cleanup routines for each drone
-
-# 📋 Important Notes
-
-1. Ensure sufficient battery charge before flight
-2. Verify WiFi connection before operation
-3. For multi-drone setup:
-   - Configure unique IP addresses for each drone
-   - Ensure video ports don't conflict
-   - Monitor network bandwidth usage
-4. Test commands in simulator first
-5. Keep safe distance between drones in formation flight
+The package implements numerous safety mechanisms:
+- **Video Stream Resilience**: Independent video handler with auto-retry functionality
+- **Thread Safety**: Secure frame capture and processing
+- **Emergency Protocol**: Emergency stop via dedicated topic
+- **Automatic Landing**: Safety landing on node shutdown
+- **Error Handling**: Comprehensive exception management for connection issues
+- **Status Monitoring**: Continuous status tracking and logging
+- **Resource Management**: Separate cleanup routines for each drone
 
 # 🔧 Troubleshooting
 
 | Issue | Possible Cause | Solution |
-|-------|---------------|----------|
-| Connection Failed | WiFi Not Connected | Check WiFi Connection |
-| Video Stream Interruption | Network Instability | Reduce Distance to Drone |
-| Multi-drone Control Issues | IP/Port Conflicts | Verify Unique Configurations |
-| Unresponsive Commands | Low Battery | Check Battery Level |
-| Video Quality Issues | Bandwidth Limitations | Adjust Video Resolution/FPS |
+|-------|----------------|----------|
+| Connection Failed | WiFi Not Connected | Check WiFi Connection to Tello network |
+| Video Stream Interruption | Network Instability | Reduce distance to drone or switch to a less congested WiFi channel |
+| Multi-drone Control Issues | IP/Port Conflicts | Verify unique configurations in launch file |
+| Unresponsive Commands | Low Battery | Check battery level (should be >20%) |
+| Video Quality Issues | Bandwidth Limitations | Reduce video resolution or FPS in configuration |
+| SLAM Localization Errors | Poor Environment Features | Ensure sufficient visual features in environment |
+| Drift During Hover | Calibration Issues | Recalibrate IMU and perform Z-calibration |
+| Intermittent SLAM Tracking | Communication Failures | Our system is designed to recover from these - wait for reconnection |
 
 # 🔗 Related Links
 
 - [AirSLAM Repository](https://github.com/sair-lab/AirSLAM)
 - [DJITelloPy Repository](https://github.com/damiafuentes/DJITelloPy)
 # 📄 License
-
+This project is licensed under the MIT License - see the LICENSE file for details.

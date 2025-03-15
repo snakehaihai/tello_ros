@@ -92,7 +92,6 @@ class TelloInstance:
         self.bridge = CvBridge()
         self.pubs = {}
         
-        # 初始化 Tello
         self.tello = None
         self.connect_tello()
         
@@ -273,13 +272,13 @@ class MultiTelloNode:
             video_port = config['video_port']
             
             try:
-                # 创建Tello实例
+                # Initialize Tello
                 tello = TelloInstance(tello_id, drone_ip, video_port)
-                # 初始化发布者
+                # Initialize publishers
                 tello.init_publishers(f'/tello{tello_id}')
-                # 启动视频流
+                # Start video stream
                 tello.start_video()
-                # 存储实例
+                # Store Tello instance
                 self.tello_instances[tello_id] = tello
                 rospy.loginfo(f"Initialized Tello {tello_id}")
             except Exception as e:
