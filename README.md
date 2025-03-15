@@ -16,11 +16,11 @@ This package bridges the gap between ROS's powerful robotics ecosystem and the a
 ![System Overview](supplimentary_material/SystemOverview.png)
 AirSwarm system consists of three primary functional layers:
 
-**Mapping Subsystem**: Implements multi-session mapping using stereo cameras, integrating visual-inertial odometry for initial pose estimation and local mapping with feature detection.
+**Mapping Subsystem [[SLAM System]](#airslam-optional)**: Implements multi-session mapping using stereo cameras, integrating visual-inertial odometry for initial pose estimation and local mapping with feature detection.
 
-**Communication Architecture**: Establishes a centralized network topology where COTS drones communicate via WiFi to Raspberry Pi units. These units serve as network bridges, utilizing a fixed-to-reconfigurable IP architecture that interfaces with ROS Topics.
+**Communication Architecture [[Network Configuration]](NETWORK_SETUP.md)**: Establishes a centralized network topology where COTS drones communicate via WiFi to Raspberry Pi units. These units serve as network bridges, utilizing a fixed-to-reconfigurable IP architecture that interfaces with ROS Topics.
 
-**Control Framework [This package]**: Implements a versatile control stack compatible with various COTS drones equipped with video feedback for planning and control functions with lightweight relocalization.
+**Control Framework [This package]**: Implements a versatile control stack based on ROS compatible with various COTS drones equipped with video feedback for planning and control functions with lightweight relocalization.
 # 💻Installation
 ## Prerequisites
 - ROS Noetic
@@ -63,6 +63,7 @@ cd DJITelloPy
 pip install -e .
 ```
 ## AirSLAM (Optional)
+If you want to use SLAM for localization and navigation, you need to download and install AirSLAM or any other SLAM algorithm in the same ROS workspace. We have made modifications to ensure compatibility with this package.
 
 For SLAM-based localization and navigation:
 
@@ -80,25 +81,63 @@ For detailed AirSLAM installation instructions, visit the [AirSLAM Repository](h
 
 | Parameter | Default | Description |
 |-----------|---------| ------------|
-| ~ID | '' | Drone identifier |
-| ~drone_ip | '192.168.10.1' | Drone IP address |
-| ~video_port | '11111' | Video stream port |
+| ID | '' | Drone identifier |
+| drone_ip | '192.168.10.1' | Drone IP address |
+| video_port | '11111' | Video stream port |
+
+Add the following line to your launch file to connect your drone:
+```xml
+<node name="tello_node" pkg="tello_ros" type="tello_node.py" output="screen"/>
+```
 ### Multi-Drone Configuration
 
 Example configuration in a launch file:
 
-```yaml
-tello_configs:
-  - id: "0"
-    ip: "192.168.10.1"
-    video_port: 11111
-  - id: "1"
-    ip: "192.168.3.21"
-    video_port: 11118
-  - id: "2"
-    ip: "192.168.3.22"
-    video_port: 11119
+```xml
+<!-- Multi-Drone nodes -->
+<node pkg="tello_ros" type="multi_tello_node.py" name="multi_tello_node" output="screen">
+    <rosparam>
+        tello_configs:
+            - id: "0"  # N
+              ip: "192.168.10.1"
+              video_port: 11111
+            - id: "1"  # T
+              ip: "192.168.3.21"
+              video_port: 11118
+            - id: "2"  # U
+              ip: "192.168.3.22"
+              video_port: 11119
+    </rosparam>
+</node>
 ```
+
+### SLAM Control Node Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| ID | Drone identifier (0, 1, 2, etc.) |
+| POSE_TOPIC_NAME | Topic name for the SLAM pose data (e.g., `/exp0/AirSLAM/frame_pose`) |
+
+Example configuration in a launch file:
+```xml
+<!-- SLAM Control nodes -->
+<node pkg="tello_ros" type="tello_slam_control.py" name="tello_slam_control_0" output="screen">
+    <param name="ID" value="0" />
+    <param name="POSE_TOPIC_NAME" value="/exp0/AirSLAM/frame_pose" /> 
+</node>
+
+<node pkg="tello_ros" type="tello_slam_control.py" name="tello_slam_control_1" output="screen">
+    <param name="ID" value="1" /> 
+    <param name="POSE_TOPIC_NAME" value="/exp1/AirSLAM/frame_pose" />
+</node>
+
+<node pkg="tello_ros" type="tello_slam_control.py" name="tello_slam_control_2" output="screen">
+    <param name="ID" value="2" /> 
+    <param name="POSE_TOPIC_NAME" value="/exp2/AirSLAM/frame_pose" />
+</node>
+```
+The `tello_slam_control.py` node serves as the critical bridge between visual SLAM localization and drone control. It subscribes to pose data from SLAM system, implements position-based PD control algorithms to transform world-frame coordinates to body-frame velocity commands, and manages coordinate system transformations. This node enables precise position tracking and trajectory following without requiring direct position control capabilities from the drone's native SDK.
+
 ## Published Topics
 
 For each drone (replace {ID} with drone identifier):
@@ -156,6 +195,7 @@ angular:
   z: 0.0
   " 
 ```
+Send velocity commands to control the drone's movement. The x value controls forward/backward motion, y controls left/right, z controls up/down, and angular.z controls yaw rotation. All values should be between -1.0 and 1.0.
 ### Keyboard Control
 ```bash
 roslaunch tello_ros keyboard_control.launch
@@ -176,10 +216,6 @@ Our system supports sophisticated multi-drone formations, such as having three d
 ```bash
 roslaunch tello_ros NTU.launch
 ```
-- **Swarm Initialization**
-  - Dynamic IP/port configuration via ROS parameter server
-  - Automatic node spawning for each drone
-  - Video stream port assignment management
 
 - **Integrated Components**
   - `multi_tello_node.py`: Central control node
@@ -211,7 +247,6 @@ The package implements numerous safety mechanisms:
 | Unresponsive Commands | Low Battery | Check battery level (should be >20%) |
 | Video Quality Issues | Bandwidth Limitations | Reduce video resolution or FPS in configuration |
 | SLAM Localization Errors | Poor Environment Features | Ensure sufficient visual features in environment |
-| Drift During Hover | Calibration Issues | Recalibrate IMU and perform Z-calibration |
 | Intermittent SLAM Tracking | Communication Failures | Our system is designed to recover from these - wait for reconnection |
 
 # 🔗 Related Links
