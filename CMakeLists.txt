@@ -172,8 +172,8 @@ catkin_install_python(PROGRAMS
   scripts/tello_keyboard_control.py
   scripts/tello_slam_control.py
   scripts/tello_ui.py
-  scripts/multi_tello_UI.py
-  scripts/sendwatpoint.py
+  scripts/multi_tello_ui.py
+  scripts/sendwaypoint.py
   scripts/mapline_filter.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
