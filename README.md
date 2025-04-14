@@ -9,6 +9,17 @@
   [![YouTube](https://img.shields.io/badge/Video-YouTube-red?logo=youtube)](https://youtu.be/Fcc6EWt5j0s)
 </div>
 
+If you find our work useful, please cite us:
+
+```bibtex
+@article{li2025airswarm,
+  title={AirSwarm: Enabling Cost-Effective Multi-UAV Research with COTS drones},
+  author={Li, Xiaowei and Xu, Kuan and Liu, Fen and Bai, Ruofei and Yuan, Shenghai and Xie, Lihua},
+  journal={arXiv preprint arXiv:2503.06890},
+  year={2025}
+}
+```
+
 # Overview
 The `tello_ros` package provides a complete ROS interface for DJI Tello drones, enabling:
 
