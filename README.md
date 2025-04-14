@@ -6,6 +6,7 @@
 
   [![Code](https://img.shields.io/badge/Code-GitHub-blue?logo=github)](https://github.com/vvEverett/tello_ros)
   [![arXiv](https://img.shields.io/badge/arXiv-2503.06890-b31b1b.svg)](https://arxiv.org/abs/2503.06890)
+  [![YouTube](https://img.shields.io/badge/Video-YouTube-red?logo=youtube)](https://youtu.be/Fcc6EWt5j0s)
 </div>
 
 # Overview
