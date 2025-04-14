@@ -1,5 +1,12 @@
-# Tello_ROS
-A comprehensive ROS package for controlling DJI Tello drones with extensive capabilities for multi-drone coordination, real-time monitoring, and infrastructure-free visual SLAM localization. This repository is part of the AirSwarm system, which aims to democratize multi-UAV research by enabling low-cost commercially available drones to perform complex coordination tasks.
+<div align="center">
+  <h1>AirSwarm</h1>
+  <h2>ROS-Based Multi-UAV System with Infrastructure-Free Visual SLAM</h2>
+  <p><strong>This work has been <i>submitted to IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS 2025)</i>.</strong></p>
+  <br>
+
+  [![Code](https://img.shields.io/badge/Code-GitHub-blue?logo=github)](https://github.com/vvEverett/tello_ros)
+  [![arXiv](https://img.shields.io/badge/arXiv-2503.06890-b31b1b.svg)](https://arxiv.org/abs/2503.06890)
+</div>
 
 # Overview
 The `tello_ros` package provides a complete ROS interface for DJI Tello drones, enabling:
