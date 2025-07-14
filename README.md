@@ -1,7 +1,7 @@
 <div align="center">
   <h1>AirSwarm</h1>
   <h2>ROS-Based Multi-UAV System with Infrastructure-Free Visual SLAM</h2>
-  <p><strong>This work has been <i>submitted to IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS 2025)</i>.</strong></p>
+  <p><strong>This work has been <i>accepted to IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS 2025)</i>.</strong></p>
   <br>
 
   [![Code](https://img.shields.io/badge/Code-GitHub-blue?logo=github)](https://github.com/vvEverett/tello_ros)
